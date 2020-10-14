@@ -9,8 +9,8 @@ export function buildStore(url: URL): CollectionStore {
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export function buildCollections(target: any, store: CollectionStore): void {
-  for (const name of ['menu']) {
-    target[name] = store.collection('menu')
+export function buildCollections(target: any, store: CollectionStore, keys: string[]): void {
+  for (const key of keys) {
+    target[key] = store.collection(key)
   }
 }

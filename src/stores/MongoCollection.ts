@@ -1,4 +1,4 @@
-import { MongoClient, Db as MongoDb, Collection as MongoDBCollection } from 'mongodb'
+import { ObjectId, MongoClient, Db as MongoDb, Collection as MongoDBCollection } from 'mongodb'
 import { Collection, CollectionStore } from './Collection'
 
 export class MongoCollection<T> implements Collection<T> {
@@ -6,13 +6,14 @@ export class MongoCollection<T> implements Collection<T> {
   constructor(private collection: MongoDBCollection) {}
 
   async find(): Promise<T[]> {
-    return this.collection.find().toArray()
+    const docs = await this.collection.find().toArray()
+    return docs.map(doc => this.convert(doc))
   }
 
   async findOne(id: string): Promise<T> {
-    const doc = await this.collection.findOne({ _id: id })
+    const doc = await this.collection.findOne({ _id: new ObjectId(id) })
     if (!doc) throw new Error(`Could not find document with id ${id}`)
-    return doc ? doc : undefined
+    return this.convert(doc)
   }
 
   async create(input: Partial<T>): Promise<T> {
@@ -23,15 +24,20 @@ export class MongoCollection<T> implements Collection<T> {
   }
 
   async update(id: string, input: Partial<T>): Promise<T> {
-    await this.collection.updateOne({ _id: id }, input)
+    await this.collection.updateOne({ _id: new ObjectId(id) }, { $set: input })
     const doc = await this.findOne(id)
     if (!doc) throw new Error(`Could not update document with id ${id}`)
     return doc
   }
 
   async delete(id: string): Promise<void> {
-    const { deletedCount } = await this.collection.deleteOne({ _id: id })
+    const { deletedCount } = await this.collection.deleteOne({ _id: new ObjectId(id) })
     if (deletedCount !== 1) throw new Error(`Could not delete document with id ${id}`)
+  }
+
+  private convert(doc: T): T {
+    (doc as any).id = (doc as any)._id.toString()
+    return doc
   }
 
 }
@@ -54,4 +60,5 @@ export class MongoStore implements CollectionStore {
   collection<T>(name: string): Collection<T> {
     return new MongoCollection(this.db.collection(name))
   }
+
 }

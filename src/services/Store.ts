@@ -1,12 +1,12 @@
 import { Service } from 'typedi'
 import { Collection, CollectionStore } from '../stores/Collection'
-import { Menu } from '../models'
+import { Page } from '../models'
 import { Config } from './Config'
 import { buildCollections, buildStore } from '../helpers/store'
 
 @Service()
 export class Store {
-  menu!: Collection<Menu>
+  page!: Collection<Page>
 
   private store: CollectionStore
 
@@ -16,7 +16,7 @@ export class Store {
 
   async start(): Promise<void> {
     await this.store.start()
-    buildCollections(this, this.store)
+    buildCollections(this, this.store, ['page'])
   }
 
   async stop(): Promise<void> {
